@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      TableName: scores
+      AttributeDefinitions: 
+        - AttributeName: userid
+          AttributeType: S
+        - AttributeName: startdate
+          AttributeType: S 
+      KeySchema: 
+        - AttributeName: userid
+          KeyType: HASH
+        - AttributeName: startdate
+          KeyType: RANGE
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5

@@ -1,0 +1,263 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: ''
+Globals:
+ Function:
+  MemorySize: 128
+  Layers:
+     -  !Ref XRayLayer
+  Runtime: python3.8
+  Timeout: 5
+  Environment:
+    Variables:
+      TABLE_NAME: scores
+Resources:
+  getScores:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: 'score-getScores'
+      Description: ''
+      CodeUri: getScores/
+      Handler: get-scores.lambda_handler
+      Role: 'arn:aws:iam::068048081706:role/score-lambda-dynamodb-access'
+  postScore:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: 'score-postScore'
+      Description: ''
+      CodeUri: postScore/
+      Handler: post-score.lambda_handler
+      Role: 'arn:aws:iam::068048081706:role/score-lambda-dynamodb-access'
+  deleteScore:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: 'score-deleteScore'
+      Description: ''
+      CodeUri: deleteScore/
+      Handler: delete-score.lambda_handler
+      Role: 'arn:aws:iam::068048081706:role/score-lambda-dynamodb-access'
+  XRayLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      Description: ''
+      ContentUri: 'xray_layer/'
+      CompatibleRuntimes:
+        - python3.8
+    Metadata:
+      BuildMethod: python3.8
+  Api:
+    Type: 'AWS::Serverless::Api'
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'POST, GET, OPTIONS, DELETE'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      EndpointConfiguration: "REGIONAL"
+      DefinitionBody:
+        swagger: "2.0"
+        info:
+          version: "1.0"
+          title: "score-app"
+        schemes:
+        - "https"
+        paths:
+          /score:
+            get:
+              consumes:
+              - "application/json"
+              produces:
+              - "application/json"
+              responses:
+                "200":
+                  description: "200 response"
+                  schema:
+                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: "string"
+              security:
+              - cogauth: []
+              x-amazon-apigateway-integration:
+                uri: !Sub  "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${getScores.Arn}/invocations"
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: |
+                    { "userid": "$context.authorizer.claims["cognito:username"]"}
+                passthroughBehavior: "when_no_templates"
+                httpMethod: "POST"
+                contentHandling: "CONVERT_TO_TEXT"
+                type: "aws"
+            post:
+              consumes:
+              - "application/json"
+              produces:
+              - "application/json"
+              responses:
+                "200":
+                  description: "200 response"
+                  schema:
+                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: "string"
+              security:
+              - cogauth: []
+              x-amazon-apigateway-integration:
+                uri: !Sub  "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${postScore.Arn}/invocations"
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: |
+                      {
+                        "method": "$context.httpMethod", 
+                        "body": {
+                              "userid": "$context.authorizer.claims["cognito:username"]",
+                              "startdate": $input.json('$.startdate'),
+                              "title":    $input.json('$.title'),
+                              "koku":    $input.json('$.koku'),
+                              "content": $input.json('$.math'),
+                              "instructor": $input.json('$.english'),
+                              "syakai":    $input.json('$.syakai'),
+                              "rika":    $input.json('$.rika')
+                        } 
+                      }
+                passthroughBehavior: "when_no_templates"
+                httpMethod: "POST"
+                contentHandling: "CONVERT_TO_TEXT"
+                type: "aws"
+            options:
+              consumes:
+              - "application/json"
+              produces:
+              - "application/json"
+              responses:
+                "200":
+                  description: "200 response"
+                  schema:
+                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: "string"
+                    Access-Control-Allow-Methods:
+                      type: "string"
+                    Access-Control-Allow-Headers:
+                      type: "string"
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: | 
+                    {"statusCode": 200}
+                passthroughBehavior: "when_no_match"
+                type: "mock"
+          /score/{startdate}:
+            delete:
+              consumes:
+              - "application/json"
+              produces:
+              - "application/json"
+              parameters:
+              - name: "startdate"
+                in: "path"
+                required: true
+                type: "string"
+              responses:
+                "200":
+                  description: "200 response"
+                  schema:
+                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: "string"
+              security:
+              - cogauth: []
+              x-amazon-apigateway-integration:
+                type: "aws"
+                uri: !Sub  "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${deleteScore.Arn}/invocations"
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: |
+                   {"userid": "$context.authorizer.claims["cognito:username"]",
+                     "startdate": "$input.params('startdate')"}
+                passthroughBehavior: "when_no_templates"
+                httpMethod: "POST"
+                contentHandling: "CONVERT_TO_TEXT"
+            options:
+              consumes:
+              - "application/json"
+              produces:
+              - "application/json"
+              responses:
+                "200":
+                  description: "200 response"
+                  schema:
+                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: "string"
+                    Access-Control-Allow-Methods:
+                      type: "string"
+                    Access-Control-Allow-Headers:
+                      type: "string"
+              x-amazon-apigateway-integration:
+                type: "mock"
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: |
+                    {"statusCode": 200}
+                passthroughBehavior: "when_no_match"
+        securityDefinitions:
+          cogauth:
+            type: "apiKey"
+            name: "Authorization"
+            in: "header"
+            x-amazon-apigateway-authtype: "cognito_user_pools"
+            x-amazon-apigateway-authorizer:
+              providerARNs:
+              - "arn:aws:cognito-idp:ap-northeast-1:068048081706:userpool/ap-northeast-1_8b3ZpQsJ3"
+              type: "cognito_user_pools"
+        definitions:
+          Empty:
+            type: "object"
+            title: "Empty Schema"
+  getScoresPermission:
+    Type: "AWS::Lambda::Permission"
+    Properties: 
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref getScores
+      Principal: apigateway.amazonaws.com
+  postScorePermission:
+    Type: "AWS::Lambda::Permission"
+    Properties: 
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref postScore
+      Principal: apigateway.amazonaws.com
+  deleteScorePermission:
+    Type: "AWS::Lambda::Permission"
+    Properties: 
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref deleteScore
+      Principal: apigateway.amazonaws.com   
