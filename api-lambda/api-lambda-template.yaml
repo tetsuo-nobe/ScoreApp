@@ -122,11 +122,11 @@ Resources:
                               "userid": "$context.authorizer.claims["cognito:username"]",
                               "startdate": $input.json('$.startdate'),
                               "title":    $input.json('$.title'),
-                              "koku":    $input.json('$.koku'),
-                              "content": $input.json('$.math'),
-                              "instructor": $input.json('$.english'),
-                              "syakai":    $input.json('$.syakai'),
-                              "rika":    $input.json('$.rika')
+                              "japaneselanguage":    $input.json('$.japaneselanguage'),
+                              "math": $input.json('$.math'),
+                              "english": $input.json('$.english'),
+                              "socialstudies":    $input.json('$.socialstudies'),
+                              "science":    $input.json('$.science')
                         } 
                       }
                 passthroughBehavior: "when_no_templates"
@@ -237,7 +237,7 @@ Resources:
             x-amazon-apigateway-authtype: "cognito_user_pools"
             x-amazon-apigateway-authorizer:
               providerARNs:
-              - "arn:aws:cognito-idp:ap-northeast-1:068048081706:userpool/ap-northeast-1_8b3ZpQsJ3"
+              - "arn:aws:cognito-idp:ap-northeast-1:068048081706:userpool/ap-northeast-1_vIM56TeP7"
               type: "cognito_user_pools"
         definitions:
           Empty:

@@ -23,19 +23,6 @@ def lambda_handler(event, context):
     logger.info(event)
     text = json.dumps(event['body'])
     item2 = json.loads(text, parse_float=decimal.Decimal)
-    ##userid =  event['body']['userid']
-    ##userid =  event['csat'][0]['userid']
-    ##logger.info(userid)
-    '''
-    item = {
-        'userid': userid,
-        'startdate'     : event['body']['startdate'],
-        'content'       : int(event['body']['content']),
-        'vilt'          : int(event['body']['vilt']),
-        'instructor'    : int(event['body']['instructor']),
-        'overall'       : int(event['body']['overall'])
-    }
-    '''
     try:
         table.put_item(
             Item = item2
