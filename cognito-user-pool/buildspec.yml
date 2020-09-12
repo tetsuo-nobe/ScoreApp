@@ -6,7 +6,7 @@ phases:
   build:
     commands:
       - export BUCKET=sam-general-tn
-      - aws cloudformation package --template-file cognito-user-pool/userpool-template.yaml --s3-bucket $BUCKET --output-template-file userpool-output.yaml
+      - aws cloudformation package  --template-file cognito-user-pool/userpool-template.yaml --s3-bucket $BUCKET --output-template-file userpool-output.yaml
 artifacts:
   type: zip
   files:
